@@ -89,7 +89,7 @@ export default function HomePage() {
             <Step
               number="2"
               title="AI analyzes the code"
-              description="RepoSage crawls the file tree, reads the source code, and uses Claude to understand the architecture."
+              description="RepoSage crawls the file tree, reads the source code, and uses OpenAI to understand the architecture."
             />
             <Step
               number="3"
@@ -112,7 +112,7 @@ export default function HomePage() {
           <p className="mt-2">
             AI-Powered Codebase Onboarding & Documentation Platform
           </p>
-          <p className="mt-1">Built with Claude by Anthropic</p>
+          <p className="mt-1">Built with OpenAI</p>
         </div>
       </footer>
     </div>

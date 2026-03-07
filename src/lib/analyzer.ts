@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { RepoFile, OnboardingGuide } from "@/types";
 
-const anthropic = new Anthropic();
+const openai = new OpenAI();
 
 function buildFileContext(files: RepoFile[]): string {
   let context = "";
@@ -23,13 +23,17 @@ export async function analyzeRepository(
   const fileContext = buildFileContext(files);
   const fileList = files.map((f) => f.path).join("\n");
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 8000,
     messages: [
       {
+        role: "system",
+        content: "You are an expert software architect analyzing GitHub repositories. Always respond with valid JSON only — no markdown, no code fences, no explanation text.",
+      },
+      {
         role: "user",
-        content: `You are an expert software architect analyzing a GitHub repository called "${repoFullName}".
+        content: `Analyze the GitHub repository called "${repoFullName}".
 Based on the codebase files provided below, generate a comprehensive onboarding guide.
 
 FILE LIST:
@@ -38,7 +42,7 @@ ${fileList}
 FILE CONTENTS:
 ${fileContext}
 
-Generate a JSON response with this exact structure (no markdown fences, just raw JSON):
+Generate a JSON response with this exact structure:
 {
   "summary": "A 2-3 paragraph executive summary of the project - what it is, what problem it solves, and the key technologies used.",
   "architecture": "A detailed description of the system architecture, including how components interact, the overall design patterns used, and the high-level data flow. Use text-based diagrams where helpful.",
@@ -56,13 +60,12 @@ Generate a JSON response with this exact structure (no markdown fences, just raw
   "keyDecisions": "Key architectural and technical decisions that can be inferred from the codebase - framework choices, database choices, authentication approach, deployment strategy, etc."
 }
 
-Important: Return ONLY valid JSON. No markdown, no code fences, no explanation text outside the JSON.`,
+Important: Return ONLY valid JSON.`,
       },
     ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
+  const text = response.choices[0]?.message?.content ?? "";
 
   // Extract JSON from response (handle potential markdown wrapping)
   let jsonStr = text.trim();
