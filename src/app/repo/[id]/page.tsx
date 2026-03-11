@@ -46,6 +46,28 @@ export default function RepoPage() {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (analysis?.status === "analyzing") {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(
+            `/api/analyze?repo=${encodeURIComponent(repoFullName)}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setAnalysis(data);
+            if (data.status !== "analyzing") {
+              clearInterval(interval);
+            }
+          }
+        } catch {
+          // keep polling
+        }
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [analysis?.status, repoFullName]);
+
   async function fetchAnalysis() {
     try {
       const res = await fetch(
@@ -70,15 +92,29 @@ export default function RepoPage() {
     );
   }
 
+  if (analysis?.status === "analyzing") {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-emerald-500" />
+        <h2 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-white">
+          Analyzing {repoFullName}...
+        </h2>
+        <p className="mt-2 text-zinc-500">
+          Claude is reading and understanding your codebase. This may take a minute.
+        </p>
+      </div>
+    );
+  }
+
   if (!analysis || !analysis.guide) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
         <BookOpen className="mx-auto h-12 w-12 text-zinc-300" />
         <h2 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-white">
-          No analysis found
+          {analysis?.status === "failed" ? "Analysis failed" : "No analysis found"}
         </h2>
         <p className="mt-2 text-zinc-500">
-          This repository hasn&apos;t been analyzed yet.
+          {analysis?.error || "This repository hasn\u0027t been analyzed yet."}
         </p>
         <Button className="mt-6" onClick={() => router.push("/dashboard")}>
           <ArrowLeft className="h-4 w-4" />

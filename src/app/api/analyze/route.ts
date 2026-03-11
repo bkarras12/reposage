@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { auth } from "@/lib/auth";
 import { getRepoFiles } from "@/lib/github";
 import { analyzeRepository } from "@/lib/analyzer";
 import { setAnalysis, getAnalysis, generateAnalysisId } from "@/lib/store";
 import { RepoAnalysis } from "@/types";
+
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -27,51 +30,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const analysisId = generateAnalysisId(session.user.id, repoFullName);
+  const userId = session.user.id;
 
-  // Check if already analyzing
-  const existing = getAnalysis(analysisId);
+  // Check if already analyzing or completed
+  const existing = await getAnalysis(userId, repoFullName);
   if (existing?.status === "analyzing") {
     return NextResponse.json(existing);
   }
 
-  // Create analysis record
+  // Create analysis record with "analyzing" status
   const analysis: RepoAnalysis = {
-    id: analysisId,
+    id: generateAnalysisId(userId, repoFullName),
     repoFullName,
     repoUrl: `https://github.com/${repoFullName}`,
     status: "analyzing",
     createdAt: new Date().toISOString(),
   };
-  setAnalysis(analysis);
+  await setAnalysis(userId, repoFullName, analysis);
 
-  // Run analysis (in MVP this blocks; in production use a job queue)
-  try {
-    const files = await getRepoFiles(session.accessToken, owner, repo, 50);
+  // Capture token for use in after() callback
+  const accessToken = session.accessToken;
 
-    if (files.length === 0) {
+  // Run analysis in the background after the response is sent
+  after(async () => {
+    try {
+      const files = await getRepoFiles(accessToken, owner, repo, 50);
+
+      if (files.length === 0) {
+        analysis.status = "failed";
+        analysis.error = "No analyzable files found in the repository.";
+        await setAnalysis(userId, repoFullName, analysis);
+        return;
+      }
+
+      const guide = await analyzeRepository(repoFullName, files);
+
+      analysis.status = "completed";
+      analysis.completedAt = new Date().toISOString();
+      analysis.guide = guide;
+      await setAnalysis(userId, repoFullName, analysis);
+    } catch (error) {
+      console.error("Analysis failed:", error);
       analysis.status = "failed";
-      analysis.error = "No analyzable files found in the repository.";
-      setAnalysis(analysis);
-      return NextResponse.json(analysis);
+      analysis.error =
+        error instanceof Error ? error.message : "Analysis failed";
+      await setAnalysis(userId, repoFullName, analysis);
     }
+  });
 
-    const guide = await analyzeRepository(repoFullName, files);
-
-    analysis.status = "completed";
-    analysis.completedAt = new Date().toISOString();
-    analysis.guide = guide;
-    setAnalysis(analysis);
-
-    return NextResponse.json(analysis);
-  } catch (error) {
-    console.error("Analysis failed:", error);
-    analysis.status = "failed";
-    analysis.error =
-      error instanceof Error ? error.message : "Analysis failed";
-    setAnalysis(analysis);
-    return NextResponse.json(analysis, { status: 500 });
-  }
+  return NextResponse.json(analysis);
 }
 
 export async function GET(request: NextRequest) {
@@ -88,8 +95,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const analysisId = generateAnalysisId(session.user.id, repoFullName);
-  const analysis = getAnalysis(analysisId);
+  const analysis = await getAnalysis(session.user.id, repoFullName);
 
   if (!analysis) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

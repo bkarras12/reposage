@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { RepoFile, OnboardingGuide } from "@/types";
 
-const anthropic = new Anthropic();
+const openai = new OpenAI();
 
 function buildFileContext(files: RepoFile[]): string {
   let context = "";
@@ -23,8 +23,8 @@ export async function analyzeRepository(
   const fileContext = buildFileContext(files);
   const fileList = files.map((f) => f.path).join("\n");
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 8000,
     messages: [
       {
@@ -61,8 +61,7 @@ Important: Return ONLY valid JSON. No markdown, no code fences, no explanation t
     ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
+  const text = response.choices[0]?.message?.content || "";
 
   // Extract JSON from response (handle potential markdown wrapping)
   let jsonStr = text.trim();
