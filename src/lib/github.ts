@@ -30,7 +30,7 @@ export async function getRepoFiles(
   accessToken: string,
   owner: string,
   repo: string,
-  maxFiles: number = 50
+  maxFiles: number = 30
 ): Promise<RepoFile[]> {
   const octokit = createOctokit(accessToken);
   const files: RepoFile[] = [];
@@ -63,7 +63,7 @@ export async function getRepoFiles(
   const eligibleBlobs = (tree.tree || [])
     .filter((item) => {
       if (item.type !== "blob" || !item.path || !item.size) return false;
-      if (item.size > 100000) return false; // Skip files > 100KB
+      if (item.size > 50000) return false; // Skip files > 50KB
       if (item.path.includes("node_modules/")) return false;
       if (item.path.includes("vendor/")) return false;
       if (item.path.includes(".min.")) return false;

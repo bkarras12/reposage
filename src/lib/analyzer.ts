@@ -8,8 +8,8 @@ function buildFileContext(files: RepoFile[]): string {
   for (const file of files) {
     // Truncate very long files to first 200 lines
     const lines = file.content.split("\n");
-    const truncated = lines.length > 200
-      ? lines.slice(0, 200).join("\n") + "\n... (truncated)"
+    const truncated = lines.length > 100
+      ? lines.slice(0, 100).join("\n") + "\n... (truncated)"
       : file.content;
     context += `\n--- ${file.path} ---\n${truncated}\n`;
   }
