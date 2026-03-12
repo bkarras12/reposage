@@ -46,7 +46,15 @@ export async function POST(request: NextRequest) {
     status: "analyzing",
     createdAt: new Date().toISOString(),
   };
-  await setAnalysis(userId, repoFullName, analysis);
+  try {
+    await setAnalysis(userId, repoFullName, analysis);
+  } catch (error) {
+    console.error("Failed to save analysis:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to save analysis" },
+      { status: 500 }
+    );
+  }
 
   // Capture token for use in after() callback
   const accessToken = session.accessToken;

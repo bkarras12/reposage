@@ -39,7 +39,7 @@ export async function getAnalysesByUser(userId: string): Promise<RepoAnalysis[]>
 export async function setAnalysis(userId: string, repoFullName: string, analysis: RepoAnalysis): Promise<void> {
   const path = blobPath(userId, repoFullName);
   await put(path, JSON.stringify(analysis), {
-    access: "public",
+    access: "private",
     addRandomSuffix: false,
     contentType: "application/json",
   });
