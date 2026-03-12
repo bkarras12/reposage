@@ -57,14 +57,23 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repoFullName }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = "Analysis failed";
+        try { msg = JSON.parse(text).error || msg; } catch { msg = text || msg; }
+        setError(msg);
+        setAnalyzingRepo(null);
+        return;
+      }
       const data = await res.json();
       if (data.status === "completed") {
         router.push(`/repo/${encodeURIComponent(repoFullName)}`);
       } else if (data.status === "failed") {
         setError(data.error || "Analysis failed");
         setAnalyzingRepo(null);
-      } else if (data.status === "analyzing") {
-        pollForCompletion(repoFullName);
+      } else {
+        setError(data.error || "Unexpected response from server");
+        setAnalyzingRepo(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed");
