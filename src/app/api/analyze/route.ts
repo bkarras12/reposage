@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
 import { auth } from "@/lib/auth";
 import { getRepoFiles } from "@/lib/github";
 import { analyzeRepository } from "@/lib/analyzer";
@@ -32,13 +31,13 @@ export async function POST(request: NextRequest) {
 
   const userId = session.user.id;
 
-  // Check if already analyzing or completed
+  // Check if already completed
   const existing = await getAnalysis(userId, repoFullName);
-  if (existing?.status === "analyzing") {
+  if (existing?.status === "completed") {
     return NextResponse.json(existing);
   }
 
-  // Create analysis record with "analyzing" status
+  // Run analysis inline (no after() — more reliable on all Vercel plans)
   const analysis: RepoAnalysis = {
     id: generateAnalysisId(userId, repoFullName),
     repoFullName,
@@ -46,47 +45,37 @@ export async function POST(request: NextRequest) {
     status: "analyzing",
     createdAt: new Date().toISOString(),
   };
+
   try {
-    await setAnalysis(userId, repoFullName, analysis);
-  } catch (error) {
-    console.error("Failed to save analysis:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to save analysis" },
-      { status: 500 }
-    );
-  }
+    const files = await getRepoFiles(session.accessToken, owner, repo, 50);
 
-  // Capture token for use in after() callback
-  const accessToken = session.accessToken;
-
-  // Run analysis in the background after the response is sent
-  after(async () => {
-    try {
-      const files = await getRepoFiles(accessToken, owner, repo, 50);
-
-      if (files.length === 0) {
-        analysis.status = "failed";
-        analysis.error = "No analyzable files found in the repository.";
-        await setAnalysis(userId, repoFullName, analysis);
-        return;
-      }
-
-      const guide = await analyzeRepository(repoFullName, files);
-
-      analysis.status = "completed";
-      analysis.completedAt = new Date().toISOString();
-      analysis.guide = guide;
-      await setAnalysis(userId, repoFullName, analysis);
-    } catch (error) {
-      console.error("Analysis failed:", error);
+    if (files.length === 0) {
       analysis.status = "failed";
-      analysis.error =
-        error instanceof Error ? error.message : "Analysis failed";
+      analysis.error = "No analyzable files found in the repository.";
       await setAnalysis(userId, repoFullName, analysis);
+      return NextResponse.json(analysis);
     }
-  });
 
-  return NextResponse.json(analysis);
+    const guide = await analyzeRepository(repoFullName, files);
+
+    analysis.status = "completed";
+    analysis.completedAt = new Date().toISOString();
+    analysis.guide = guide;
+    await setAnalysis(userId, repoFullName, analysis);
+
+    return NextResponse.json(analysis);
+  } catch (error) {
+    console.error("Analysis failed:", error);
+    analysis.status = "failed";
+    analysis.error =
+      error instanceof Error ? error.message : "Analysis failed";
+    try {
+      await setAnalysis(userId, repoFullName, analysis);
+    } catch {
+      // If storage also fails, still return the error to the client
+    }
+    return NextResponse.json(analysis, { status: 500 });
+  }
 }
 
 export async function GET(request: NextRequest) {
