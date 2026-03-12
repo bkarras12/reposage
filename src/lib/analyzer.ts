@@ -24,7 +24,7 @@ export async function analyzeRepository(
   const fileList = files.map((f) => f.path).join("\n");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4o-mini",
     max_tokens: 8000,
     messages: [
       {
