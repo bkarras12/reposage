@@ -8,8 +8,8 @@ function buildFileContext(files: RepoFile[]): string {
   for (const file of files) {
     // Truncate very long files to first 200 lines
     const lines = file.content.split("\n");
-    const truncated = lines.length > 100
-      ? lines.slice(0, 100).join("\n") + "\n... (truncated)"
+    const truncated = lines.length > 50
+      ? lines.slice(0, 50).join("\n") + "\n... (truncated)"
       : file.content;
     context += `\n--- ${file.path} ---\n${truncated}\n`;
   }
@@ -25,7 +25,7 @@ export async function analyzeRepository(
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    max_tokens: 8000,
+    max_tokens: 4000,
     messages: [
       {
         role: "user",

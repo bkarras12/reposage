@@ -30,7 +30,7 @@ export async function getRepoFiles(
   accessToken: string,
   owner: string,
   repo: string,
-  maxFiles: number = 30
+  maxFiles: number = 15
 ): Promise<RepoFile[]> {
   const octokit = createOctokit(accessToken);
   const files: RepoFile[] = [];
@@ -87,7 +87,7 @@ export async function getRepoFiles(
     .slice(0, maxFiles);
 
   // Fetch file contents in parallel (batched)
-  const batchSize = 10;
+  const batchSize = 15;
   for (let i = 0; i < eligibleBlobs.length; i += batchSize) {
     const batch = eligibleBlobs.slice(i, i + batchSize);
     const results = await Promise.all(
