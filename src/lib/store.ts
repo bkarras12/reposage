@@ -1,4 +1,4 @@
-import { put, list, head } from "@vercel/blob";
+import { put, list, del } from "@vercel/blob";
 import { RepoAnalysis } from "@/types";
 
 function blobPath(userId: string, repoFullName: string): string {
@@ -12,8 +12,10 @@ export function generateAnalysisId(userId: string, repoFullName: string): string
 export async function getAnalysis(userId: string, repoFullName: string): Promise<RepoAnalysis | undefined> {
   const path = blobPath(userId, repoFullName);
   try {
-    const blob = await head(path);
-    const res = await fetch(blob.url);
+    const { blobs } = await list({ prefix: path, limit: 1 });
+    if (blobs.length === 0) return undefined;
+    const res = await fetch(blobs[0].downloadUrl);
+    if (!res.ok) return undefined;
     return await res.json();
   } catch {
     return undefined;
@@ -26,7 +28,8 @@ export async function getAnalysesByUser(userId: string): Promise<RepoAnalysis[]>
   const analyses: RepoAnalysis[] = [];
   for (const blob of blobs) {
     try {
-      const res = await fetch(blob.url);
+      const res = await fetch(blob.downloadUrl);
+      if (!res.ok) continue;
       const data: RepoAnalysis = await res.json();
       analyses.push(data);
     } catch {
@@ -38,6 +41,15 @@ export async function getAnalysesByUser(userId: string): Promise<RepoAnalysis[]>
 
 export async function setAnalysis(userId: string, repoFullName: string, analysis: RepoAnalysis): Promise<void> {
   const path = blobPath(userId, repoFullName);
+  // Delete existing blob first (since addRandomSuffix: false may not overwrite)
+  try {
+    const { blobs } = await list({ prefix: path, limit: 1 });
+    if (blobs.length > 0) {
+      await del(blobs[0].url);
+    }
+  } catch {
+    // ignore cleanup errors
+  }
   await put(path, JSON.stringify(analysis), {
     access: "private",
     addRandomSuffix: false,
