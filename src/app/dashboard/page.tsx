@@ -22,6 +22,28 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [analyzingRepo, setAnalyzingRepo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+
+  const loadingMessages = [
+    "Fetching repository files...",
+    "Reading your codebase...",
+    "Mapping project structure...",
+    "Analyzing architecture patterns...",
+    "Identifying key modules...",
+    "Generating onboarding guide...",
+    "Almost there...",
+  ];
+
+  useEffect(() => {
+    if (!analyzingRepo) {
+      setLoadingMsgIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingMsgIndex((i) => Math.min(i + 1, loadingMessages.length - 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [analyzingRepo]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -136,9 +158,8 @@ export default function DashboardPage() {
               <p className="font-medium text-emerald-800 dark:text-emerald-200">
                 Analyzing {analyzingRepo}...
               </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                This may take a minute. Claude is reading and understanding your
-                codebase.
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 transition-opacity duration-300">
+                {loadingMessages[loadingMsgIndex]}
               </p>
             </div>
           </div>
