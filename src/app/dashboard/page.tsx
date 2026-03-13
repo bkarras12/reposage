@@ -89,6 +89,7 @@ export default function DashboardPage() {
       }
       const data = await res.json();
       if (data.status === "completed") {
+        sessionStorage.setItem(`analysis:${repoFullName}`, JSON.stringify(data));
         router.push(`/repo/${encodeURIComponent(repoFullName)}`);
       } else if (data.status === "failed") {
         setError(data.error || "Analysis failed");

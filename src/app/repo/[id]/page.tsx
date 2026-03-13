@@ -69,6 +69,18 @@ export default function RepoPage() {
   }, [analysis?.status, repoFullName]);
 
   async function fetchAnalysis() {
+    // Check sessionStorage first (set by dashboard after successful analysis)
+    try {
+      const cached = sessionStorage.getItem(`analysis:${repoFullName}`);
+      if (cached) {
+        setAnalysis(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // sessionStorage unavailable
+    }
+
     try {
       const res = await fetch(
         `/api/analyze?repo=${encodeURIComponent(repoFullName)}`
