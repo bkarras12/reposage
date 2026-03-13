@@ -50,9 +50,9 @@ Generate a JSON response with this exact structure (no markdown fences, just raw
       "responsibilities": ["Responsibility 1", "Responsibility 2"]
     }
   ],
-  "setupInstructions": "Step-by-step instructions for setting up the development environment, installing dependencies, and running the project locally. Derive these from config files and scripts found in the codebase.",
+  "setupInstructions": "Comprehensive step-by-step setup guide. Include: 1) Prerequisites (language runtimes, package managers, CLI tools, database servers needed and their versions), 2) How to clone and install dependencies, 3) Environment variables needed (list every env var found in .env.example or referenced in code, with a description of what each one is for and how to obtain it), 4) Database setup or migrations if applicable, 5) How to run the dev server, 6) How to run tests, linting, and builds, 7) Common gotchas or troubleshooting tips. Use newlines to separate sections clearly.",
   "conventions": "Coding conventions and patterns observed in the codebase - naming conventions, file organization, error handling patterns, testing patterns, etc.",
-  "dataFlow": "A text-based description of how data flows through the system, from input to output. Include key entry points and data transformations.",
+  "dataFlow": "A detailed multi-paragraph description of how data flows through the system. Trace at least 2-3 key user journeys or request flows end-to-end (e.g. user signs up, user creates a resource, data gets processed). For each flow, describe: the entry point (UI action or API call), each service/function/component the data passes through, any transformations or validations applied, where data is persisted, and what the user sees as output. Use numbered steps for clarity. Separate each flow with a blank line.",
   "keyDecisions": "Key architectural and technical decisions that can be inferred from the codebase - framework choices, database choices, authentication approach, deployment strategy, etc."
 }
 
