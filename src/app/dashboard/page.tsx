@@ -104,28 +104,6 @@ export default function DashboardPage() {
     }
   }
 
-  async function pollForCompletion(repoFullName: string) {
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(
-          `/api/analyze?repo=${encodeURIComponent(repoFullName)}`
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.status === "completed") {
-          clearInterval(interval);
-          router.push(`/repo/${encodeURIComponent(repoFullName)}`);
-        } else if (data.status === "failed") {
-          clearInterval(interval);
-          setError(data.error || "Analysis failed");
-          setAnalyzingRepo(null);
-        }
-      } catch {
-        // keep polling
-      }
-    }, 3000);
-  }
-
   if (status === "loading" || loading) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">

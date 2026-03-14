@@ -29,6 +29,8 @@ export default [
         HTMLButtonElement: "readonly",
         HTMLSpanElement: "readonly",
         HTMLElement: "readonly",
+        HTMLTextAreaElement: "readonly",
+        sessionStorage: "readonly",
         // Node globals
         process: "readonly",
         Buffer: "readonly",

@@ -21,8 +21,10 @@ import {
   Lightbulb,
   Loader2,
   ExternalLink,
+  MessageCircle,
 } from "lucide-react";
 import { RepoAnalysis } from "@/types";
+import ChatPanel from "@/components/chat-panel";
 
 export default function RepoPage() {
   const { data: session, status } = useSession();
@@ -145,6 +147,7 @@ export default function RepoPage() {
     { id: "setup", label: "Setup", icon: Terminal },
     { id: "conventions", label: "Conventions", icon: Code2 },
     { id: "decisions", label: "Key Decisions", icon: Lightbulb },
+    { id: "chat", label: "Ask Questions", icon: MessageCircle },
   ];
 
   return (
@@ -327,6 +330,10 @@ export default function RepoPage() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "chat" && (
+          <ChatPanel repoFullName={repoFullName} guide={guide} />
         )}
       </div>
     </div>
