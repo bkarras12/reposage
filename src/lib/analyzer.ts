@@ -40,7 +40,7 @@ ${fileContext}
 
 Generate a JSON response with this exact structure (no markdown fences, just raw JSON):
 {
-  "summary": "A 3-4 paragraph executive summary of the project. Paragraph 1: what it is and what problem it solves. Paragraph 2: the key technologies and frameworks used. Paragraph 3: a concrete use case - describe a specific real-world scenario where a user or team would use this project, walking through what they do and the value they get from it.",
+  "summary": "EXACTLY 3 separate paragraphs, each separated by two newlines (\\n\\n). You MUST include all three paragraphs:\\n\\nParagraph 1: What the project is and what problem it solves.\\n\\nParagraph 2: The key technologies, frameworks, and libraries used and how they fit together.\\n\\nParagraph 3: A concrete use case. Describe a specific real-world scenario where a person or team would use this project step by step, and the value they get from it.",
   "architecture": "A detailed description of the system architecture, including how components interact, the overall design patterns used, and the high-level data flow. Use text-based diagrams where helpful.",
   "modules": [
     {
