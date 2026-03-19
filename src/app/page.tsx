@@ -112,7 +112,6 @@ export default function HomePage() {
           <p className="mt-2">
             AI-Powered Codebase Onboarding & Documentation Platform
           </p>
-          <p className="mt-1">Built with Claude by Anthropic</p>
         </div>
       </footer>
     </div>
